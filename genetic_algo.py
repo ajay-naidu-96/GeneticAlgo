@@ -33,9 +33,11 @@ class KnapSack:
         
         self.fitness_tracker = collections.deque(maxlen=10)
         self.early_stop = early_stop
-    
 
-    def get_initial_population(self):
+        self.eval_df = pd.DataFrame(columns=['Pop_Size', 'KnapSack_Value', 'Knapsack_Max_Capacity', "Max_Item_Count"])
+
+
+    def get_initial_population(self, population_size=0):
 
         # code from the pdf
 
@@ -50,10 +52,15 @@ class KnapSack:
 
         self.current_gen = 0
 
-        self.population = np.random.choice([0, 1], size=(pop_size ,n), p=[0.9, 0.1])
+        # Override default pop size in config
 
-        self.initial_population_size = pop_size
+        if (population_size > 0):
+            self.initial_population_size = population_size
+        else:
+            self.initial_population_size = pop_size
 
+        self.population = np.random.choice([0, 1], size=(self.initial_population_size ,n), p=[0.9, 0.1])
+            
 
     def print_config(self):
 
@@ -318,7 +325,89 @@ class KnapSack:
         self.best_generation_value))
         print("*"*105)
 
+
+    def evaluate(self, population_size, num_trials):
         
+        self.get_initial_population(population_size)
+
+        for i in range(num_trials):
+
+            self.current_gen = 0
+            self.best_generation_value = -1
+
+            fittest_individual = []
+            best_fitness = 0
+            max_capacity = 0
+            active_gene_count = 0
+
+            while self.current_gen <= self.stop:
+
+                self.evaluate_population_fitness()
+                selected_parents = self.selection()
+
+                self.current_gen += 1
+
+                avg_fitness, avg_capacity = self.calculate_evaluation_report(selected_parents)
+
+                fittest_individual = self.get_fittest_individual(selected_parents)
+
+                if (fittest_individual[0] > best_fitness):
+                    best_fitness, max_capacity = self.evaluate_fitness(fittest_individual[1])
+                    active_gene_count = np.sum(fittest_individual[1] == 1)
+                
+                if avg_fitness > self.best_generation_value:
+
+                    self.best_generation_value = avg_fitness
+                    self.best_generation = selected_parents
+                    self.best_generation_idx = self.current_gen
+
+                self.fitness_tracker.append(avg_fitness)
+
+                if ((self.early_stop) and (self.current_gen > len(self.fitness_tracker))):
+                    if self.fitness_tracker.count(self.fitness_tracker[0]) == len(self.fitness_tracker):
+                        break   
+
+                new_parents = []
+
+                if self.enable_crossover:
+
+                    pop = len(selected_parents)-1
+
+                    sample = random.sample(range(pop), pop)
+
+                    for i in range(0, pop):
+                        r1 = []
+                        r2 = []
+
+                        if i < pop-1:
+                            r1 = selected_parents[i]
+                            r2 = selected_parents[i+1]
+                        else:
+                            r1 = selected_parents[i]
+                            r2 = selected_parents[0]
+                        
+                        new_child1, new_child2 = self.crossover(r1, r2)
+
+                        new_parents.append(new_child1)
+                        new_parents.append(new_child2)
+
+                if self.enable_mutation:
+
+                    for i in range(len(new_parents)):
+                        new_parents[i] = self.mutation(new_parents[i])
+
+                if self.enable_crossover:
+                    self.population = new_parents
+                elif self.enable_mutation:
+                    self.population = new_parents
+                else:
+                    self.population = selected_parents
+
+            self.eval_df.loc[len(self.eval_df)] = [population_size, best_fitness, max_capacity, active_gene_count]
+    
+        self.eval_df.to_csv("output/Eval.csv", index=False)
+
+
 
 
 

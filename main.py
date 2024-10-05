@@ -14,6 +14,8 @@ if __name__ == "__main__":
     parser.add_argument('--mutation_rate', type=float, default=0.05)
     parser.add_argument('--save_output', default=False, action='store_true')
     parser.add_argument('--early_stop', default=False, action='store_true')
+    parser.add_argument('--evaluate_population_sizes', default='False', action='store_true')
+    parser.add_argument('--num_trials', type=int, default=30)
 
     args = parser.parse_args()
 
@@ -22,4 +24,13 @@ if __name__ == "__main__":
             args.mutation_rate, args.save_output, 
             args.early_stop, args.tournament_size)
 
-    test.run()
+    if args.evaluate_population_sizes:
+        # Run in Evaluation mode
+        population_sizes = [i for i in range(10, 40, 3)][:10]
+
+        for population_size in population_sizes:
+            test.evaluate(population_size, args.num_trials)
+
+    else:
+        # Just Run
+        test.run()
