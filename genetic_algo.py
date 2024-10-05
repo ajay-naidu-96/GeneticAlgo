@@ -310,7 +310,7 @@ class KnapSack:
 
         if self.save_output:
 
-            output_file_name = 'output/selection' + offset + "_" + str(self.stop) + '_generation' + "_" + self.conf.split('/')[-1].split('.')[0] + '.csv'
+            output_file_name = 'output/selection' + offset + "_" + str(self.current_gen) + '_generation' + "_" + self.conf.split('/')[-1].split('.')[0] + '.csv'
             df.to_csv(output_file_name, index=False)
 
         print("*"*105)
