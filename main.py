@@ -16,16 +16,19 @@ if __name__ == "__main__":
     parser.add_argument('--early_stop', default=False, action='store_true')
     parser.add_argument('--evaluate_population_sizes', default='False', action='store_true')
     parser.add_argument('--num_trials', type=int, default=30)
+    parser.add_argument('--custom_fit', default=False, action='store_true')
 
     args = parser.parse_args()
 
     test = KnapSack(args.config, args.selection, args.enable_crossover, 
             args.enable_mutation, args.selection_rate, 
             args.mutation_rate, args.save_output, 
-            args.early_stop, args.tournament_size)
+            args.early_stop, args.custom_fit,
+            args.tournament_size)
 
-    if args.evaluate_population_sizes:
+    if args.evaluate_population_sizes is True:
         # Run in Evaluation mode
+        print("Running in Eval Mode:")
         population_sizes = [i for i in range(10, 40, 3)][:10]
 
         for population_size in population_sizes:
@@ -33,4 +36,5 @@ if __name__ == "__main__":
 
     else:
         # Just Run
+        print("Running in Normal Mode:")
         test.run()

@@ -7,7 +7,7 @@ import collections
 class KnapSack:
     def __init__(self, conf_path, criteria, enable_crossover, 
     enable_mutation, srate, mutation_rate, save_output,
-    early_stop, tournament_size=2):
+    early_stop, custom_fit, tournament_size=2):
 
         self.conf = conf_path
         self.selection_criteria = criteria
@@ -35,6 +35,8 @@ class KnapSack:
         self.early_stop = early_stop
 
         self.eval_df = pd.DataFrame(columns=['Pop_Size', 'KnapSack_Value', 'Knapsack_Max_Capacity', "Max_Item_Count"])
+
+        self.custom_fit = custom_fit
 
 
     def get_initial_population(self, population_size=0):
@@ -85,6 +87,24 @@ class KnapSack:
             
         return total_value, total_weight
 
+    
+    def evaluate_fitness_custom(self, chromosome):
+
+        total_value = 0
+        total_weight = 0
+
+        for idx, gene in enumerate(chromosome):
+
+            if gene:
+                total_weight += self.item_choices[idx][0]
+                total_value += self.item_choices[idx][1]
+
+        if total_weight > self.capacity:
+            penalty = (total_weight - self.capacity) ** 2  
+            return total_value - penalty, total_weight
+
+        return total_value, total_weight
+
 
     def evaluate_population_fitness(self):
 
@@ -93,6 +113,12 @@ class KnapSack:
         
         for idx, chromosome in enumerate(self.population):
 
+            fitness = 0
+            cur_capacity = 0
+
+            # if self.custom_fit:
+            #     fitness, cur_capacity = self.evaluate_fitness_custom(chromosome)
+            # else:
             fitness, cur_capacity = self.evaluate_fitness(chromosome)
             
             if (fitness > 0):
@@ -246,6 +272,9 @@ class KnapSack:
         if self.enable_mutation:
             offset += "_mutation"
             offset += "_" + str(self.mutation_rate)
+
+        if self.custom_fit:
+            offset += "_custom_fitness"
 
         while self.current_gen <= self.stop:
 
